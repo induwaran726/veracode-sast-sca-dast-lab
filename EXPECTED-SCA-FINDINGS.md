@@ -3,7 +3,7 @@
 Source: `npm audit` on the baseline `package.json` / `package-lock.json` (Node 24, npm 11).
 Run `npm audit` locally after `npm install` to reproduce. **Do not upgrade before the baseline Veracode SCA scan.**
 
-Summary (at time of scaffolding): **18 vulnerabilities — 5 low, 2 moderate, 9 high, 2 critical** across 104 prod dependencies.
+Summary (after hardening 2026-09-04): **23 vulnerabilities — 5 low, 2 moderate, 12 high, 4 critical** across 120 prod dependencies (`npm audit` on Node 24/npm 11).
 
 ## Direct dependencies pinned to historically-vulnerable versions
 
@@ -15,6 +15,11 @@ Summary (at time of scaffolding): **18 vulnerabilities — 5 low, 2 moderate, 9 
 | SCA-004 | node-fetch | 2.6.0 | CVE-2020-15168, GHSA-r683-j2x4-v87g, GHSA-w7rc-rwvf-8q5r | high | 2.6.7 / 3.x | direct | Used intentionally in SSRF module |
 | SCA-005 | minimist | 1.2.0 | CVE-2020-7598, CVE-2021-44906 (GHSA-vh95-rmgr-6w4m, GHSA-xvch-5gv4-984h) | critical | 1.2.8 | direct | Classic prototype-pollution demo |
 | SCA-006 | express-fileupload | 1.1.6 | CVE-2020-7699 (GHSA-wm7h-9275-46v2 via dicer/busboy) | high | 1.1.8 / 1.5.x | direct | Safe file-upload demo |
+| SCA-007 | handlebars | 4.7.6 | CVE-2021-23369 RCE via template (GHSA-f2jv-r9rf-7988), CVE-2023-XXX prototype pollution | critical/high | 4.7.8 | direct | Inline SSTI demo `/api/ssti` |
+| SCA-008 | serialize-javascript | 3.1.0 | CVE-2020-7660 RCE via RegExp.flags (GHSA-5c6j-r48x-rmvq) | high | 7.1.1 | direct | XSS/RCE demo `/api/serialize` |
+| SCA-009 | js-yaml | 3.13.1 | Prototype pollution in merge (GHSA-mh29-5h37-fv8m), quadratic DoS | critical/high | 3.15.2/4.x | direct | Unsafe yaml load demo `/api/yaml` |
+| SCA-010 | moment | 2.29.1 | GHSA-8hfj-j24r-96c4 path traversal, ReDoS GHSA-wc69-rhjr-hc9g | high | 2.30.1 | direct | ReDoS demo `/api/moment` |
+| SCA-011 | xmldom | 0.4.0 | GHSA-h6q6-9hqw-rwfv XXE, multiple injection GHSA | critical | no fix (replace) | direct | XXE demo `/api/xxe` |
 
 ## Notable transitive findings (also surfaced by Veracode SCA via dependency paths)
 

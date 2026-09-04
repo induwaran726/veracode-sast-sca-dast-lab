@@ -32,6 +32,15 @@
 | SAST-026 | SSRF unvalidated fetch | CWE-918 | A10 | `src/vulnerabilities/a10-ssrf.js` | `fetchUrlVulnerable` | High | `fetchUrlSecure` (allowlist + private-IP block) |
 | SAST-027 | Insecure deserialization / mass assignment | CWE-502 | A08 | `src/vulnerabilities/a08-integrity.js` | `deserializeProfileStateVulnerable` | Medium | validated allowlist |
 | SAST-028 | Integrity check trusts client | CWE-345 | A08 | `src/vulnerabilities/a08-integrity.js` | `verifyOrderIntegrityVulnerable` | Medium | `verifyOrderIntegritySecure` (HMAC, timingSafeEqual) |
+| SAST-029 | OS command injection (inline) | CWE-78 | A03 | `src/routes/api.js` | `exec(cmd)` in `/api/exec` | Critical | allowlist + no shell |
+| SAST-030 | Code injection via eval | CWE-95 | A03 | `src/routes/api.js` | `eval(code)` in `/api/eval` | Critical | remove eval, use JSON/allowlist |
+| SAST-031 | Path traversal (inline read) | CWE-22/73 | A01 | `src/routes/api.js` | `fs.readFileSync(path.join(..., file))` in `/api/read` | High | basename + containment |
+| SAST-032 | Reflected XSS (inline) | CWE-79 | A03 | `src/routes/api.js` | `res.send("<div>"+x+"</div>")` in `/api/xss` | High | output encoding |
+| SAST-033 | SSTI (Handlebars compile) | CWE-94 | A03 | `src/routes/api.js` | `Handlebars.compile(tpl)` in `/api/ssti` | High | strict allowlist, no user tpl |
+| SAST-034 | XXE via xmldom | CWE-611 | A05 | `src/routes/api.js` | `DOMParser().parseFromString(xml)` in `/api/xxe` | High | disable external entities (xmldom no fix — replace) |
+| SAST-035 | Unsafe yaml load | CWE-502 | A08 | `src/routes/api.js` | `yaml.load(y)` in `/api/yaml` | High | `yaml.load(y, {schema: SAFE})` + upgrade js-yaml |
+| SAST-036 | XSS via serialize-javascript | CWE-79 | A03 | `src/routes/api.js` | `serialize(obj)` in `/api/serialize` | High | JSON.stringify + CSP, upgrade serialize-javascript |
+| SAST-037 | ReDoS/path traversal via moment locale | CWE-400/22 | A05 | `src/routes/api.js` | `moment(d).format()` / `moment.locale` | Medium | upgrade moment, validate input |
 
 ## Remediation pass
 

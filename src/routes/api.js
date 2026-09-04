@@ -1,6 +1,14 @@
 "use strict";
 
 const express = require("express");
+const fs = require("node:fs");
+const path = require("node:path");
+const { exec } = require("node:child_process");
+const Handlebars = require("handlebars");
+const serialize = require("serialize-javascript");
+const yaml = require("js-yaml");
+const moment = require("moment");
+const { DOMParser } = require("xmldom");
 const router = express.Router();
 const db = require("../database");
 const { requireLogin } = require("../middleware/authMiddleware");
@@ -114,6 +122,70 @@ router.get("/api/ssrf-secure", requireLogin, (req, res) => {
   } catch (e) {
     res.status(400).send(e.message);
   }
+});
+
+// ── HIGH/CRITICAL INLINE EXPLOITABLE PATTERNS (SAST high-severity) ──
+
+// CWE-78: OS Command Injection — no sanitization, direct exec of query param
+router.get("/api/exec", requireLogin, (req, res) => {
+  const cmd = req.query.cmd || "echo lab";
+  exec(cmd, { timeout: 2000 }, (err, stdout, stderr) => {
+    res.type("text").send(stdout || stderr || "");
+  });
+});
+
+// CWE-95: Code Injection via eval
+router.get("/api/eval", requireLogin, (req, res) => {
+  const code = req.query.code || "2+2";
+  const result = eval(code); // intentionally vulnerable
+  res.json({ result: String(result) });
+});
+
+// CWE-22/73: Path Traversal — direct file read from query
+router.get("/api/read", requireLogin, (req, res) => {
+  const file = req.query.file || "package.json";
+  const data = fs.readFileSync(path.join(process.cwd(), file), "utf8");
+  res.type("text").send(data);
+});
+
+// CWE-79: Reflected XSS — raw query reflected without encoding
+router.get("/api/xss", requireLogin, (req, res) => {
+  const x = req.query.x || "";
+  res.send("<html><body><div>" + x + "</div></body></html>");
+});
+
+// CWE-79: Stored XSS via serialize-javascript (XSS through JSON injection)
+router.get("/api/serialize", requireLogin, (req, res) => {
+  const input = req.query.input || '{"x":1}';
+  const obj = JSON.parse(input);
+  res.send("<script>var data = " + serialize(obj) + ";</script>");
+});
+
+// CWE-94: Server-Side Template Injection (Handlebars)
+router.get("/api/ssti", requireLogin, (req, res) => {
+  const tpl = req.query.tpl || "Hello {{name}}";
+  const compiled = Handlebars.compile(tpl);
+  res.send(compiled({ name: req.session.user && req.session.user.name }));
+});
+
+// CWE-20/91: XXE via xmldom (xmldom 0.4.0 has XXE)
+router.get("/api/xxe", requireLogin, (req, res) => {
+  const xml = req.query.xml || "<root>lab</root>";
+  const doc = new DOMParser().parseFromString(xml, "text/xml");
+  res.type("text").send(doc.toString());
+});
+
+// CWE-20: Unsafe yaml deserialization (js-yaml 3.13.1)
+router.get("/api/yaml", requireLogin, (req, res) => {
+  const y = req.query.yaml || "a: 1";
+  const obj = yaml.load(y);
+  res.json(obj);
+});
+
+// CWE-400: ReDoS via moment (moment 2.29.1 vulnerable to ReDoS on crafted input)
+router.get("/api/moment", requireLogin, (req, res) => {
+  const d = req.query.d || "2024-01-01";
+  res.send(moment(d).format());
 });
 
 module.exports = router;
