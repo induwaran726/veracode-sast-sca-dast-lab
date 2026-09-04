@@ -1,0 +1,8 @@
+<%- include('partials/header') %>
+<h1>Search (secure, output-encoded)</h1>
+<form method="get" action="/search-secure">
+  <input name="q" value="<%= q %>">
+  <button type="submit">Search</button>
+</form>
+<h2>Results for: <%= q %></h2> <!-- SECURE: escaped -->
+<%- include('partials/footer') %>

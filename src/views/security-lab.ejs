@@ -1,0 +1,15 @@
+<%- include('partials/header') %>
+<h1>Security Lab Catalog</h1>
+<p>Every case has a vulnerable and a secure implementation. Runtime guards keep live exploitation contained (see SECURITY-TESTING.md).</p>
+<% catalog.forEach(section => { %>
+  <section>
+    <h2><%= section.owasp %></h2>
+    <p><code><%= section.file %></code></p>
+    <ul>
+      <% section.cases.forEach(c => { %>
+        <li><strong><%= c.name %></strong> — <%= c.vulnerable %></li>
+      <% }) %>
+    </ul>
+  </section>
+<% }) %>
+<%- include('partials/footer') %>

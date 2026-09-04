@@ -1,0 +1,16 @@
+<%- include('partials/header') %>
+<h1>Dashboard</h1>
+<p class="banner"><%= banner %></p>
+<p>Signed in as <strong><%= user.email %></strong> (<%= user.role %>)</p>
+<ul>
+  <li><a href="/profile">Profile</a></li>
+  <li><a href="/products">Products</a></li>
+  <li><a href="/orders">Orders</a></li>
+  <li><a href="/search?q=security">Search</a></li>
+  <li><a href="/comments">Comments</a></li>
+  <li><a href="/upload">Upload</a></li>
+  <li><a href="/redirect?url=/products">Redirect demo</a></li>
+  <li><a href="/api">API index</a></li>
+  <li><a href="/security-lab">Security lab catalog</a></li>
+</ul>
+<%- include('partials/footer') %>

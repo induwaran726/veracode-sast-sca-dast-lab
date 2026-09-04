@@ -1,0 +1,10 @@
+<%- include('partials/header') %>
+<h1>Admin</h1>
+<p>Users (server-side admin check):</p>
+<table>
+  <tr><th>ID</th><th>Email</th><th>Role</th><th>Balance</th></tr>
+  <% users.forEach(u => { %>
+    <tr><td><%= u.id %></td><td><%= u.email %></td><td><%= u.role %></td><td><%= u.balance %></td></tr>
+  <% }) %>
+</table>
+<%- include('partials/footer') %>

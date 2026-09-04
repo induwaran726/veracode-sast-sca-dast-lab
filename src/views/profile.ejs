@@ -1,0 +1,7 @@
+<%- include('partials/header') %>
+<h1>Profile</h1>
+<p>Email: <%= user.email %></p>
+<p>Role: <%= user.role %></p>
+<h2>Client state demo (A04/A08)</h2>
+<p>POST JSON state to <code>/profile/state</code> (VULNERABLE merge) or <code>/profile/state-secure</code> (allowlist).</p>
+<%- include('partials/footer') %>

@@ -1,0 +1,10 @@
+<%- include('partials/header') %>
+<h1>Veracode SAST + SCA + DAST Security Lab</h1>
+<p>Intentionally vulnerable Node.js/Express application for demonstrating Veracode static analysis, software composition analysis, and dynamic analysis against the OWASP Top 10.</p>
+<ul>
+  <li><a href="/health">/health</a> — public health check</li>
+  <li><a href="/login">/login</a> — Microsoft Entra ID authorization-code login</li>
+  <li><a href="/security-lab">/security-lab</a> — vulnerability catalog (requires login)</li>
+</ul>
+<p>All data in this application is synthetic. No real credentials are used anywhere.</p>
+<%- include('partials/footer') %>

@@ -1,0 +1,15 @@
+<%- include('partials/header') %>
+<h1>Comments (<%= mode %>)</h1>
+<p>Stored XSS lab: post <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> here. The vulnerable view renders raw HTML; the secure view escapes.</p>
+<form method="post" action="<%= mode === 'secure' ? '/comments-secure' : '/comments' %>">
+  <textarea name="body"></textarea>
+  <button type="submit">Post</button>
+</form>
+<ul>
+<% comments.forEach(c => { %>
+  <li><strong><%= c.author %></strong>:
+  <% if (mode === 'secure') { %><%= c.body %><% } else { %><%- c.body %><% } %>
+  </li>
+<% }) %>
+</ul>
+<%- include('partials/footer') %>

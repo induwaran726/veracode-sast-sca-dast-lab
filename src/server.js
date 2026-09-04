@@ -1,0 +1,91 @@
+"use strict";
+
+const express = require("express");
+const session = require("express-session");
+const path = require("node:path");
+
+const config = require("./config");
+const database = require("./database");
+const { applySecureHeaders } = require("./middleware/security");
+const a05 = require("./vulnerabilities/a05-misconfiguration");
+
+const indexRoutes = require("./routes/index");
+const authRoutes = require("./routes/auth");
+const dashboardRoutes = require("./routes/dashboard");
+const profileRoutes = require("./routes/profile");
+const productsRoutes = require("./routes/products");
+const ordersRoutes = require("./routes/orders");
+const adminRoutes = require("./routes/admin");
+const searchRoutes = require("./routes/search");
+const commentsRoutes = require("./routes/comments");
+const uploadRoutes = require("./routes/upload");
+const redirectRoutes = require("./routes/redirect");
+const apiRoutes = require("./routes/api");
+const securityLabRoutes = require("./routes/securityLab");
+
+function createApp() {
+  database.init();
+
+  const app = express();
+  app.set("view engine", "ejs");
+  app.set("views", path.join(__dirname, "views"));
+  app.disable("x-powered-by"); // minimal hardening; headers still mostly missing for DAST A05
+
+  // VULNERABLE (SAST-007 / CWE-614): weak session cookie configuration
+  app.use(
+    session({
+      name: "lab.sid",
+      secret: config.sessionSecret,
+      resave: false,
+      saveUninitialized: true, // VULNERABLE
+      cookie: a05.weakCookieOptions(),
+    })
+  );
+
+  app.use(express.static(path.join(__dirname, "..", "public")));
+  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json());
+
+  // Public health endpoint (HTTP 200)
+  app.get("/health", (req, res) => {
+    res.status(200).json({ status: "ok", service: "veracode-sast-sca-dast-lab" });
+  });
+
+  app.use("/", indexRoutes);
+  app.use("/", authRoutes);
+  app.use("/", dashboardRoutes);
+  app.use("/", profileRoutes);
+  app.use("/", productsRoutes);
+  app.use("/", ordersRoutes);
+  app.use("/", adminRoutes);
+  app.use("/", searchRoutes);
+  app.use("/", commentsRoutes);
+  app.use("/", uploadRoutes);
+  app.use("/", redirectRoutes);
+  app.use("/", apiRoutes);
+
+  // SECURE example area: strict headers applied to /security-lab only
+  app.use("/security-lab", applySecureHeaders, securityLabRoutes);
+
+  // VULNERABLE (SAST-016 / CWE-209): verbose error output to clients
+  app.use((err, req, res, next) => {
+    res.status(500).json(a05.errorResponseVulnerable(err));
+  });
+
+  app.use((req, res) => {
+    res
+      .status(404)
+      .render("error", { message: "Not found", user: (req.session && req.session.user) || null });
+  });
+
+  return app;
+}
+
+if (require.main === module) {
+  const app = createApp();
+  app.listen(config.port, () => {
+    console.log(`veracode-sast-sca-dast-lab listening on port ${config.port}`);
+  });
+}
+
+module.exports = { createApp };

@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.*
+!.env.example
+*.log
+*.db
+*.sqlite
+*.pem
+*.key
+*.p12
+*.pfx
+coverage/
+.DS_Store
+Thumbs.db

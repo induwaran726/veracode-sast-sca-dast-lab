@@ -1,0 +1,10 @@
+<%- include('partials/header') %>
+<h1>Upload (path traversal lab)</h1>
+<p>VULNERABLE: filename from <code>X-File-Name</code> header is joined into a path (CWE-22) with a runtime containment guard.</p>
+<p>SECURE: <code>POST /upload-secure</code> sanitizes to basename + allowlist chars.</p>
+<% if (result) { %><p>Result: target=<code><%= result.target %></code> written=<code><%= result.written %></code></p><% } %>
+<form method="post" action="/upload">
+  <textarea name="content" placeholder="file content"></textarea>
+  <button type="submit">Upload</button>
+</form>
+<%- include('partials/footer') %>

@@ -1,0 +1,9 @@
+<%- include('partials/header') %>
+<h1>Search (reflected XSS lab)</h1>
+<form method="get" action="/search">
+  <input name="q" value="<%= q %>">
+  <button type="submit">Search</button>
+</form>
+<h2>Results for: <%- qRaw %></h2>  <!-- VULNERABLE: raw output (CWE-79) -->
+<p>SECURE variant: <a href="/search-secure?q=<%= encodeURIComponent(q) %>">/search-secure</a></p>
+<%- include('partials/footer') %>

@@ -1,0 +1,17 @@
+<%- include('partials/header') %>
+<h1>Products</h1>
+<table>
+  <tr><th>ID</th><th>Name</th><th>Price</th><th>Stock</th><th></th></tr>
+  <% products.forEach(p => { %>
+    <tr>
+      <td><%= p.id %></td>
+      <td><%= p.name %></td>
+      <td><%= p.price %></td>
+      <td><%= p.stock %></td>
+      <td><a href="/products/<%= p.id %>">view</a></td>
+    </tr>
+  <% }) %>
+</table>
+<p>Search (VULNERABLE): <a href="/products/search?q=Demo">/products/search?q=Demo</a></p>
+<p>Search (SECURE): <a href="/products/search-secure?q=Demo">/products/search-secure?q=Demo</a></p>
+<%- include('partials/footer') %>
