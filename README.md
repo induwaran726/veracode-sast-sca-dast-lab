@@ -38,8 +38,8 @@ npm audit
 npm start              # http://localhost:3000
 ```
 
-Public routes need no login: `/`, `/health`, `/login`, `/auth/callback`, `/logout`.
-Protected routes redirect to Entra ID when not authenticated.
+Public routes need no login: `/`, `/health`, `/login`, `/login/local`, `/login/sso`, `/auth/callback`, `/logout`.
+Protected routes redirect to `/login`. Authentication offers **Local Login** (synthetic lab accounts `dast-user@example.test` / `dast-admin@example.test`) and **Microsoft Entra ID SSO**, both populating a common session (`authMethod: "local" | "entra-sso"`). Dashboard shows the method for DAST evidence.
 
 ## Auth
 
@@ -48,7 +48,7 @@ Callback is derived from `BASE_URL` (never hard-coded): `BASE_URL + /auth/callba
 `ADMIN_EMAIL` determines who can access `/admin` (normal user → 403).
 Dashboard renders `AUTHENTICATED_DAST_TEST_USER` after login for authenticated DAST.
 
-Env vars: `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET`, `ENTRA_TENANT_ID`, `SESSION_SECRET`, `BASE_URL`, `ADMIN_EMAIL`. Only `.env.example` is committed.
+Env vars: `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET`, `ENTRA_TENANT_ID`, `SESSION_SECRET`, `BASE_URL`, `ADMIN_EMAIL`, `LOCAL_AUTH_ENABLED`, `LOCAL_USER_PASSWORD`, `LOCAL_ADMIN_PASSWORD`. Only `.env.example` is committed.
 
 ## Routes
 

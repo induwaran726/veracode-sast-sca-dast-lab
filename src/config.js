@@ -6,6 +6,11 @@ const config = {
   baseUrl: process.env.BASE_URL || "http://localhost:3000",
   sessionSecret: process.env.SESSION_SECRET || "lab-only-insecure-dev-secret",
   adminEmail: process.env.ADMIN_EMAIL || "dast-admin@example.com",
+  localAuth: {
+    enabled: process.env.LOCAL_AUTH_ENABLED !== "false",
+    userPassword: process.env.LOCAL_USER_PASSWORD || "",
+    adminPassword: process.env.LOCAL_ADMIN_PASSWORD || "",
+  },
   entra: {
     clientId: process.env.ENTRA_CLIENT_ID || "",
     clientSecret: process.env.ENTRA_CLIENT_SECRET || "",

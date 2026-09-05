@@ -10,6 +10,8 @@ process.env.LAB_DB_PATH = path.join(
   require("node:os").tmpdir(),
   `lab-test-${Date.now()}-${process.pid}.db`
 );
+process.env.LOCAL_USER_PASSWORD = process.env.LOCAL_USER_PASSWORD || "TestUserPass123!";
+process.env.LOCAL_ADMIN_PASSWORD = process.env.LOCAL_ADMIN_PASSWORD || "TestAdminPass123!";
 
 const { createApp } = require("../src/server");
 const a01 = require("../src/vulnerabilities/a01-access-control");
@@ -158,6 +160,66 @@ describe("security headers", () => {
     } finally {
       server.close();
     }
+  });
+});
+
+describe("local + SSO auth (integration)", () => {
+  test("GET /login shows both options, /login/local form, /login/sso redirects", async () => {
+    const server = await startServer();
+    try {
+      const base = getBase(server);
+      const login = await fetch(`${base}/login`);
+      assert.equal(login.status, 200);
+      const html = await login.text();
+      assert.match(html, /Local Login/);
+      assert.match(html, /Microsoft Entra ID/);
+      assert.equal((await fetch(`${base}/login/local`)).status, 200);
+      assert.equal((await fetch(`${base}/login/sso`, { redirect: "manual" })).status, 302);
+    } finally { server.close(); }
+  });
+
+  test("POST /login/local with valid creds creates session and dashboard shows authMethod", async () => {
+    const server = await startServer();
+    try {
+      const base = getBase(server);
+      const res = await fetch(`${base}/login/local`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "email=dast-user%40example.test&password=TestUserPass123!",
+        redirect: "manual",
+      });
+      assert.equal(res.status, 302);
+      assert.equal(res.headers.get("location"), "/dashboard");
+      const cookie = res.headers.get("set-cookie");
+      assert.ok(cookie && cookie.includes("lab.sid"));
+      const dash = await fetch(`${base}/dashboard`, { headers: { Cookie: cookie } });
+      assert.equal(dash.status, 200);
+      const html = await dash.text();
+      assert.match(html, /AUTHENTICATED_DAST_TEST_USER/);
+      assert.match(html, /Local Authentication/);
+      // authorization: local user -> /admin 403, local admin -> 200
+      const admin403 = await fetch(`${base}/admin`, { headers: { Cookie: cookie }, redirect: "manual" });
+      assert.equal(admin403.status, 403);
+      // logout invalidates
+      const logout = await fetch(`${base}/logout`, { headers: { Cookie: cookie }, redirect: "manual" });
+      assert.equal(logout.status, 302);
+    } finally { server.close(); }
+  });
+
+  test("POST /login/local with bad password returns 401 without enumeration", async () => {
+    const server = await startServer();
+    try {
+      const base = getBase(server);
+      const res = await fetch(`${base}/login/local`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "email=dast-user%40example.test&password=wrong",
+      });
+      assert.equal(res.status, 401);
+      const html = await res.text();
+      assert.match(html, /invalid credentials/);
+      assert.doesNotMatch(html, /user not found/);
+    } finally { server.close(); }
   });
 });
 
