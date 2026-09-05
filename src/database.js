@@ -116,6 +116,13 @@ function seedLocalUsers() {
       "INSERT INTO users (email, name, password_hash, role, balance, api_key, is_active) VALUES (?, ?, ?, ?, ?, ?, 1)"
     ).run(u.email, u.name, hash, u.role, u.balance, u.api_key);
   }
+  // Explicit local user requested via lab setup (admin@example.com)
+  const extraHash = "$2a$10$vAl3JYJOqvcc9BVI14uJt.v2h27WHtmGozYNrOPJUaiH92H4G3Z6a"; // bcrypt for Pass@!23
+  if (!db.prepare("SELECT id FROM users WHERE email = ?").get("admin@example.com")) {
+    db.prepare(
+      "INSERT INTO users (email, name, password_hash, role, balance, api_key, is_active) VALUES (?, ?, ?, ?, ?, ?, 1)"
+    ).run("admin@example.com", "Admin", extraHash, "admin", 5000, "SYNTHETIC-ADMIN-EXAMPLE-KEY");
+  }
 }
 
 function md5(input) {
