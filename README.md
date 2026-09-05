@@ -28,18 +28,79 @@ Laptop (OpenCode + GitHub + Render MCP + Veracode)
 
 Node.js 20+, Express 4, EJS, `node:sqlite` (built-in), `express-session`, Microsoft Entra ID OIDC (hand-rolled authorization-code flow), Axios/node-fetch for SSRF demo, synthetic lodash/minimist/jsonwebtoken etc. pinned at historically-vulnerable versions for SCA.
 
-## Quick start (local)
+## Prerequisites
+
+- **Node.js 20+** and **npm** (for local) *or* **Docker** (for container)
+- Git, and a Microsoft Entra ID app registration *only* if you want SSO
+
+## Installation
 
 ```bash
-cp .env.example .env   # fill ENTRA_* only if you want SSO locally
+git clone https://github.com/induwaran/veracode-sast-sca-dast-lab.git
+cd veracode-sast-sca-dast-lab
+cp .env.example .env   # then edit .env — see Environment below
+```
+
+### Environment (.env)
+
+| Variable | Required | Purpose |
+|---|---:|---|
+| `NODE_ENV` | no | `development` locally, `production` on Render/Docker |
+| `PORT` | no | defaults to `3000` (Render injects `10000`) |
+| `BASE_URL` | SSO only | e.g. `http://localhost:3000` or `https://<service>.onrender.com` — callback is `BASE_URL + /auth/callback` |
+| `SESSION_SECRET` | yes | `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| `ADMIN_EMAIL` | no | `dast-admin@example.com` style — decides `/admin` access |
+| `LOCAL_AUTH_ENABLED` | no | `true` (default) |
+| `LOCAL_USER_PASSWORD` / `LOCAL_ADMIN_PASSWORD` | local DAST | lab-only synthetic passwords for `dast-user@example.test` / `dast-admin@example.test` (also `admin@example.com`/`Pass@!23` is seeded) |
+| `ENTRA_CLIENT_ID` / `ENTRA_CLIENT_SECRET` / `ENTRA_TENANT_ID` | SSO only | Entra app registration (scopes `openid profile email`) |
+
+Only `.env.example` is committed — never commit `.env`.
+
+## Running — Local (npm)
+
+```bash
 npm install
-npm test
-npm audit
-npm start              # http://localhost:3000
+npm test        # 18 tests — health, SAST units, local+SSO auth, headers
+npm audit       # 23 vulns (5 low,2 mod,12 high,4 crit) on the hardened baseline
+npm start       # http://localhost:3000
+curl http://localhost:3000/health
+```
+
+## Running — Docker (internal host)
+
+The `Dockerfile` (`node:20-alpine`, `npm ci`, `EXPOSE 3000`, `CMD ["npm","start"]`) is ready for any internal host — no Entra required for local DAST (use Local Login).
+
+```bash
+# build
+docker build -t veracode-lab .
+
+# run with .env file (recommended)
+docker run -d --name veracode-lab -p 3000:3000 --env-file .env veracode-lab
+
+# or inline (lab-only)
+docker run -d --name veracode-lab -p 3000:3000 \
+  -e NODE_ENV=production \
+  -e BASE_URL=http://localhost:3000 \
+  -e SESSION_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))") \
+  veracode-lab
+
+# persist SQLite across restarts
+docker run -d --name veracode-lab -p 3000:3000 --env-file .env -v $(pwd)/data:/app/data veracode-lab
+
+# compose alternative
+# services:
+#   web:
+#     build: .
+#     ports: ["3000:3000"]
+#     env_file: .env
+#     volumes: ["./data:/app/data"]
+
+docker logs -f veracode-lab
+curl http://localhost:3000/health
 ```
 
 Public routes need no login: `/`, `/health`, `/login`, `/login/local`, `/login/sso`, `/auth/callback`, `/logout`.
-Protected routes redirect to `/login`. Authentication offers **Local Login** (synthetic lab accounts `dast-user@example.test` / `dast-admin@example.test`) and **Microsoft Entra ID SSO**, both populating a common session (`authMethod: "local" | "entra-sso"`). Dashboard shows the method for DAST evidence.
+Protected routes redirect to `/login`. Authentication offers **Local Login** (synthetic lab accounts `dast-user@example.test` / `dast-admin@example.test` and `admin@example.com`/`Pass@!23`) and **Microsoft Entra ID SSO**, both populating a common session (`authMethod: "local" | "entra-sso"`). Dashboard shows the method for DAST evidence.
 
 ## Auth
 
