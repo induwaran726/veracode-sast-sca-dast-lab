@@ -30,15 +30,25 @@ function createApp() {
   app.set("view engine", "ejs");
   app.set("views", path.join(__dirname, "views"));
   app.disable("x-powered-by"); // minimal hardening; headers still mostly missing for DAST A05
+  // Trust Render's proxy so secure cookies work behind TLS termination
+  if (config.env === "production") app.set("trust proxy", 1);
 
-  // VULNERABLE (SAST-007 / CWE-614): weak session cookie configuration
+  // Session cookie: functional for browsers (lax + env-aware secure). The
+  // intentionally weak configuration remains in src/vulnerabilities/a05-misconfiguration.js
+  // as weakCookieOptions() for SAST/DAST (CWE-614) — not used for the live session.
+  const isProd = config.env === "production";
   app.use(
     session({
       name: "lab.sid",
       secret: config.sessionSecret,
       resave: false,
-      saveUninitialized: true, // VULNERABLE
-      cookie: a05.weakCookieOptions(),
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: "lax",
+        maxAge: 60 * 60 * 1000,
+      },
     })
   );
 
